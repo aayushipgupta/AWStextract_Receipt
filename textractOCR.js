@@ -1,6 +1,7 @@
 const AWS = require("aws-sdk")
 const fs = require("fs");
 const config = require("./config");
+const moment = require('moment');
 
 var resultOCR = {};
 var items = [];
@@ -11,7 +12,7 @@ AWS.config.update({
 });
 
 const textract = new AWS.Textract();
-var datafs = fs.readFileSync("Images/image.jpeg");
+var datafs = fs.readFileSync("Images/image9.jpg");
 var detectParam = {
     Document:{
         Bytes:Buffer.from(datafs),
@@ -88,6 +89,8 @@ function getResult_Old(objList) {
          if(obj.BlockType == "LINE"){
             if(isGoodDate(obj.Text))
                 add(resultOCR,"DATE",obj.Text);
+            // else if(isValidUKPostCode("HADRIAN ROAD, WALLSEND NE28 6HH"))
+            //     add(resultOCR,"POSTCODE",obj.Text);
          }
    });
 }
@@ -101,11 +104,32 @@ function filterObj(objList,filterName){
    function add(itemList, key, value) {
         itemList[key] = value;
     }
+    // function isGoodDate(dt){
+    //     var reGoodDate = /^(?:(0[1-9]|1[012])[\/.](0[1-9]|[12][0-9]|3[01])[\/.](19|20)[0-9]{2})$/;
+    //     return reGoodDate.test(dt);
+    // }
     function isGoodDate(dt){
-        var reGoodDate = /^(?:(0[1-9]|1[012])[\/.](0[1-9]|[12][0-9]|3[01])[\/.](19|20)[0-9]{2})$/;
-        return reGoodDate.test(dt);
+        var allowedDateFormats = ['MM/DD/YYYY','DD/MM/YYYY','YYYY/MM/DD','MM-DD-YYYY',
+        'DD-MM-YYYY','YYYY-MM-DD','YYYY-DD-MM',
+        'MM/DD/YY','DD/MM/YY','YY/MM/DD','MM-DD-YY','DD-MM-YY','YY-MM-DD','YY-DD-MM',
+        'D/M/YYYY', 'DD.MM.YYYY', 'D.M.YYYY',
+        'MMM-DD-YY','DD-MMM-YY','YY-MMM-DD','YY-DD-MMM', 
+        'MMM/DD/YYYY','DD/MMM/YYYY','YYYY/MMM/DD', 'MMM-DD-YYYY','DD-MMM-YYYY','YYYY-MMM-DD','YYYY-DD-MMM',
+        'MMMM Do, YYYY','MMMM D, YYYY','D MMM YYYY','DD MMM YYYY'];
+
+        return moment(dt, allowedDateFormats, true).isValid();
     }
 
-    const isDate = (date) => {
-        return (new Date(date) !== "Invalid Date") && !isNaN(new Date(date));
-      }
+    /*function isValidUKPostCode(str)
+{
+ regexp = /^[A-Z]{1,2}[0-9RCHNQ][0-9A-Z]?\s?[0-9][ABD-HJLNP-UW-Z]{2}$|^[A-Z]{2}-?[0-9]{4}$/;
+  
+        if (str.includes(regexp.test(str)))
+          {
+            return true;
+          }
+        else
+          {
+            return false;
+          }
+}*/
